@@ -6,7 +6,7 @@ import { load } from "cheerio";
 const url = "https://overwatch.blizzard.com/en-us/career/";
 const privateProfileClass = ".Profile-private---msg";
 const statsContainerClass =
-  ".controller-view.Profile-view.is-active .stats-container.option-0 .category:nth-child(3) .content";
+  ".controller-view.Profile-view .stats-container.option-0 .category:nth-child(3) .content";
 
 export const show = {
   data: new SlashCommandBuilder()
@@ -55,7 +55,6 @@ export const show = {
         await interaction.editReply(reply.join(""));
         return;
       }
-
       //err
       throw new Error("Couldn't find the correct classes");
     } catch (e) {
