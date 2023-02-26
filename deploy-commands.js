@@ -8,11 +8,11 @@ const commandFiles = readdirSync("./commands").filter((file) =>
   file.endsWith(".js")
 );
 
-// TODO: fix this to take dynamic object names
 // Grab the SlashCommandBuilder#toJSON() output of each command's data for deployment
 for (const file of commandFiles) {
   const command = await import(`./commands/${file}`);
-  commands.push(command.show.data.toJSON());
+  const key = file.split(".")[0];
+  commands.push(command[key].data.toJSON());
 }
 
 // Construct and prepare an instance of the REST module

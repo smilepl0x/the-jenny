@@ -2,9 +2,17 @@ import { readdirSync } from "fs";
 import { dirname, join } from "path";
 import { fileURLToPath, pathToFileURL } from "url";
 // Require the necessary discord.js classes
-import { Client, Collection, Events, GatewayIntentBits } from "discord.js";
+import {
+  ButtonStyle,
+  Client,
+  Collection,
+  Events,
+  GatewayIntentBits,
+} from "discord.js";
 import config from "./config.json" assert { type: "json" };
-// console.log("token", token);
+import SessionManager from "./SessionManager.js";
+import { ActionRowBuilder, ButtonBuilder } from "@discordjs/builders";
+
 // Create a new client instance
 const client = new Client({ intents: [GatewayIntentBits.Guilds] });
 
@@ -18,8 +26,8 @@ const commandFiles = readdirSync(commandsPath).filter((file) =>
 
 for (const file of commandFiles) {
   const filePath = pathToFileURL(join(commandsPath, file)).toString();
-  console.log("the path", filePath);
-  const { show: command } = await import(filePath);
+  const key = file.split(".")[0];
+  const { [key]: command } = await import(filePath);
   // Set a new item in the Collection with the key as the command name and the value as the exported module
   if ("data" in command && "execute" in command) {
     client.commands.set(command.data.name, command);
@@ -36,6 +44,7 @@ client.once(Events.ClientReady, (c) => {
   console.log(`Ready! Logged in as ${c.user.tag}`);
 });
 
+// Slash commands
 client.on(Events.InteractionCreate, async (interaction) => {
   if (!interaction.isChatInputCommand()) return;
 
@@ -54,6 +63,57 @@ client.on(Events.InteractionCreate, async (interaction) => {
       content: "There was an error while executing this command!",
       ephemeral: true,
     });
+  }
+});
+
+// Buttons
+client.on(Events.InteractionCreate, async (interaction) => {
+  if (!interaction.isButton()) return;
+
+  const [original, _] = interaction.message.content.split("\n");
+  const theSession = SessionManager.sessions.find(
+    (session) => session.messageId === interaction.message.interaction.id
+  );
+
+  try {
+    if (interaction.customId === "drop-in") {
+      if (theSession.numParty < theSession.maxParty || !theSession.maxParty) {
+        theSession.numParty++;
+      }
+    } else if (interaction.customId === "drop-out") {
+      if (theSession.numParty > 0) {
+        theSession.numParty--;
+      }
+    }
+
+    // Update button states
+    const partyFull = theSession.numParty >= theSession.maxParty;
+    const buttons = new ActionRowBuilder().addComponents(
+      new ButtonBuilder()
+        .setCustomId("drop-in")
+        .setLabel(partyFull ? "Party full" : "Drop in")
+        .setStyle(ButtonStyle.Primary)
+        .setDisabled(partyFull),
+      new ButtonBuilder()
+        .setCustomId("drop-out")
+        .setLabel("Drop out")
+        .setStyle(ButtonStyle.Secondary)
+    );
+
+    if (theSession.numParty <= 0) {
+      SessionManager.removeSession(theSession.id);
+      interaction.message.delete();
+    } else {
+      interaction.update({
+        content: `${original}\n${theSession.numParty}${
+          theSession.maxParty ? `/${theSession.maxParty}` : ""
+        } deep!`,
+        components: [buttons],
+      });
+    }
+  } catch (e) {
+    console.log(e);
+    interaction.reply("Something went wrong.");
   }
 });
 
