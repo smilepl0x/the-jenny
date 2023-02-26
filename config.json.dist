@@ -1,0 +1,13 @@
+{
+  "token": "XXX",
+  "clientId": "XXX",
+  "guildId": "XXX",
+  "sessionTimeout": 18000000,
+  "games": [
+    {
+      "labels": ["ow", "overwatch", "ow2", "overwatch 2", "ow 2"],
+      "roleId": "XXX",
+      "maxParty": 5
+    }
+  ]
+}
