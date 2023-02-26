@@ -25,7 +25,6 @@ export const show = {
       await interaction.deferReply();
 
       // Validation
-      console.log("BattleTag", interaction.options.getString("user"));
       const userString = interaction.options.getString("user");
       if (!/[A-Z0-9]{1,20}#[0-9]{1,10}/i.test(userString)) {
         await interaction.editReply("Invalid BattleTag format.");
@@ -44,7 +43,7 @@ export const show = {
         await interaction.editReply("This profile is marked as private.");
         return;
       } else if ($(statsContainerClass).html()) {
-        const reply = [`Console QP stats for ${userString}\n\n`];
+        const reply = [`Console stats for ${userString}\n\n`];
         $(".stat-item p", statsContainerClass).each((i, el) => {
           if (i % 2 === 0) {
             reply.push(`\`\`\`${$(el).text()}:`);
