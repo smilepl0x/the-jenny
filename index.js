@@ -12,6 +12,7 @@ import {
 import config from "./config.json" assert { type: "json" };
 import SessionManager from "./SessionManager.js";
 import { ActionRowBuilder, ButtonBuilder } from "@discordjs/builders";
+import { startSessionStringBuilder } from "./utils.js";
 
 // Create a new client instance
 const client = new Client({ intents: [GatewayIntentBits.Guilds] });
@@ -71,23 +72,33 @@ client.on(Events.InteractionCreate, async (interaction) => {
   if (!interaction.isButton()) return;
 
   const [original, _] = interaction.message.content.split("\n");
-  const theSession = SessionManager.sessions.find(
-    (session) => session.messageId === interaction.message.interaction.id
+  const theSession = SessionManager.findSession(
+    interaction.message.interaction.id
   );
 
   try {
+    // Shouldn't happen, but jic
+    if (!theSession) {
+      interaction.message.delete();
+      throw new Error("No session was found.");
+    }
+
+    const partyFull = theSession.numParty >= theSession.maxParty;
+    const alreadyIn = theSession.party.includes(interaction.user);
+
     if (interaction.customId === "drop-in") {
-      if (theSession.numParty < theSession.maxParty || !theSession.maxParty) {
+      if ((!partyFull || !theSession.maxParty) && !alreadyIn) {
         theSession.numParty++;
+        theSession.addPartyMember(interaction.user);
       }
     } else if (interaction.customId === "drop-out") {
-      if (theSession.numParty > 0) {
+      if (theSession.numParty > 0 && alreadyIn) {
         theSession.numParty--;
+        theSession.removePartyMember(interaction.user);
       }
     }
 
     // Update button states
-    const partyFull = theSession.numParty >= theSession.maxParty;
     const buttons = new ActionRowBuilder().addComponents(
       new ButtonBuilder()
         .setCustomId("drop-in")
@@ -100,20 +111,25 @@ client.on(Events.InteractionCreate, async (interaction) => {
         .setStyle(ButtonStyle.Secondary)
     );
 
-    if (theSession.numParty <= 0) {
-      SessionManager.removeSession(theSession.id);
-      interaction.message.delete();
-    } else {
-      interaction.update({
-        content: `${original}\n${theSession.numParty}${
-          theSession.maxParty ? `/${theSession.maxParty}` : ""
-        } deep!`,
-        components: [buttons],
-      });
-    }
+    const interactionObj =
+      theSession.numParty > 0
+        ? {
+            content: startSessionStringBuilder({
+              original,
+              numParty: theSession.numParty,
+              maxParty: theSession.maxParty,
+              party: theSession.party,
+            }),
+            components: [buttons],
+          }
+        : {
+            content: "Session ended",
+            components: [],
+          };
+    interaction.update(interactionObj);
   } catch (e) {
     console.log(e);
-    interaction.reply("Something went wrong.");
+    interaction.reply("Ya fucked up, Jimbo.");
   }
 });
 

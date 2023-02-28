@@ -3,6 +3,7 @@ import { SlashCommandBuilder, ButtonStyle } from "discord.js";
 import { v4 as uuidv4 } from "uuid";
 import config from "../config.json" assert { type: "json" };
 import SessionManager from "../SessionManager.js";
+import { startSessionStringBuilder } from "../utils.js";
 
 export const start = {
   data: new SlashCommandBuilder()
@@ -42,19 +43,16 @@ export const start = {
       }
 
       const reply = await interaction.reply({
-        content: `${interaction.user} has started a(n) ${
-          role ? `<@&${role}>` : interaction.options.getString("game")
-        } session.\n1${maxParty ? `/${maxParty}` : ""} deep!\n`,
+        content: startSessionStringBuilder({
+          user: interaction.user,
+          role,
+          game: interaction.options.getString("game"),
+          maxParty,
+        }),
         components: [buttons],
       });
 
-      SessionManager.addSession({
-        id: uuidv4(),
-        startTime: Date.now(),
-        messageId: reply.id,
-        numParty: 1,
-        maxParty: maxParty,
-      });
+      SessionManager.addSession(reply.id, maxParty, interaction.user);
     } catch (e) {
       console.log(e);
       interaction.reply("Something broke. Great job.");
