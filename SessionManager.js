@@ -7,7 +7,7 @@ export class Session {
     this.id = uuidv4();
     this.startTime = Date.now();
     this.messageId = id;
-    this.maxParty = maxParty || null;
+    this.maxParty = maxParty || undefined;
     this.party = [user];
     this.numParty = this.party.length;
   }
