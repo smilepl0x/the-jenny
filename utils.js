@@ -12,7 +12,7 @@ export const startSessionStringBuilder = ({
     original
       ? original
       : `${user} has started a(n) ${role ? `<@&${role}>` : game} session.`
-  }\n\`\`\`Current party (${numParty}${
-    maxParty ? `/${maxParty}` : ""
-  } deep):\n${party.map((member) => `${member.username}`).join(", ")}\`\`\``;
+  }
+  \`\`\`Current party (${numParty}${maxParty ? `/${maxParty}` : ""} deep):
+  ${party.map((member) => `${member.username}`).join(", ")}\`\`\``;
 };
