@@ -38,13 +38,14 @@ class SessionManager {
     this.#sessions = [];
     this.client = null;
 
-    // Watcher - Clears sessions after timeoout, runs every 30 mins
+    // Watcher - Clears sessions after timeoout
     setInterval(() => {
       this.#sessions.forEach(async (session) => {
         if (
           Date.now() - session.startTime > config.sessionTimeout &&
           this.client
         ) {
+          console.log(`Attempting to remove session ${session}`);
           this.removeSession(session);
           // Edit the message
           const channel = await this.client.channels.fetch(session.channel);
@@ -52,7 +53,7 @@ class SessionManager {
           message.edit({ content: "Session ended", components: [] });
         }
       });
-    }, 1800000);
+    }, config.sessionTimeout / 10);
   }
 
   setClient(client) {
