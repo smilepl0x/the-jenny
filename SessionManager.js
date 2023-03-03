@@ -1,11 +1,11 @@
 import { v4 as uuidv4 } from "uuid";
+import config from "./config.json" assert { type: "json" };
 
-let manager;
-
-export class Session {
-  constructor(id, maxParty, user) {
+class Session {
+  constructor(id, maxParty, user, channel) {
     this.id = uuidv4();
     this.startTime = Date.now();
+    this.channel = channel;
     this.messageId = id;
     this.maxParty = maxParty || undefined;
     this.party = [user];
@@ -26,23 +26,41 @@ export class Session {
   };
 }
 
+let manager;
 class SessionManager {
-  #sessions = [];
-
+  #sessions;
   constructor() {
     if (manager) {
       console.log("Instance already created");
       return;
     }
     manager = this;
+    this.#sessions = [];
+    this.client = null;
+
+    // Watcher - Clears sessions after timeoout, runs every 30 mins
+    setInterval(() => {
+      this.#sessions.forEach(async (session) => {
+        if (
+          Date.now() - session.startTime > config.sessionTimeout &&
+          this.client
+        ) {
+          this.removeSession(session);
+          // Edit the message
+          const channel = await this.client.channels.fetch(session.channel);
+          const message = await channel.messages.fetch(`${session.messageId}`);
+          message.edit({ content: "Session ended", components: [] });
+        }
+      });
+    }, 1800000);
   }
 
-  get sessions() {
-    return this.#sessions;
+  setClient(client) {
+    this.client = client;
   }
 
-  addSession(id, maxParty, user) {
-    this.#sessions.push(new Session(id, maxParty, user));
+  addSession(id, maxParty, user, channel) {
+    this.#sessions.push(new Session(id, maxParty, user, channel));
   }
 
   removeSession(ref) {
@@ -55,4 +73,4 @@ class SessionManager {
   }
 }
 
-export default Object.freeze(new SessionManager());
+export default new SessionManager(); // Object.freeze

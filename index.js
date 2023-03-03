@@ -16,6 +16,8 @@ import { startSessionStringBuilder } from "./utils.js";
 
 // Create a new client instance
 const client = new Client({ intents: [GatewayIntentBits.Guilds] });
+// Set the client in SessionManager - TODO: Make this better.
+SessionManager.setClient(client);
 
 client.commands = new Collection();
 
@@ -71,10 +73,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
 client.on(Events.InteractionCreate, async (interaction) => {
   if (!interaction.isButton()) return;
 
-  const [original, _] = interaction.message.content.split("\n");
-  const theSession = SessionManager.findSession(
-    interaction.message.interaction.id
-  );
+  const theSession = SessionManager.findSession(interaction.message.id);
 
   try {
     // Shouldn't happen, but jic
@@ -111,21 +110,25 @@ client.on(Events.InteractionCreate, async (interaction) => {
         .setStyle(ButtonStyle.Secondary)
     );
 
-    const interactionObj =
-      theSession.numParty > 0
-        ? {
-            content: startSessionStringBuilder({
-              original,
-              numParty: theSession.numParty,
-              maxParty: theSession.maxParty,
-              party: theSession.party,
-            }),
-            components: [buttons],
-          }
-        : {
-            content: "Session ended",
-            components: [],
-          };
+    const [original, _] = interaction.message.content.split("\n");
+    let interactionObj;
+    if (theSession.numParty > 0) {
+      interactionObj = {
+        content: startSessionStringBuilder({
+          original,
+          numParty: theSession.numParty,
+          maxParty: theSession.maxParty,
+          party: theSession.party,
+        }),
+        components: [buttons],
+      };
+    } else {
+      interactionObj = {
+        content: "Session ended",
+        components: [],
+      };
+      SessionManager.removeSession(theSession);
+    }
     interaction.update(interactionObj);
   } catch (e) {
     console.log(e);

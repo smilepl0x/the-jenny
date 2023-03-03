@@ -1,6 +1,5 @@
 import { ActionRowBuilder, ButtonBuilder } from "@discordjs/builders";
 import { SlashCommandBuilder, ButtonStyle } from "discord.js";
-import { v4 as uuidv4 } from "uuid";
 import config from "../config.json" assert { type: "json" };
 import SessionManager from "../SessionManager.js";
 import { startSessionStringBuilder } from "../utils.js";
@@ -42,7 +41,7 @@ export const start = {
         }
       }
 
-      const reply = await interaction.reply({
+      await interaction.reply({
         content: startSessionStringBuilder({
           user: interaction.user,
           role,
@@ -52,7 +51,13 @@ export const start = {
         components: [buttons],
       });
 
-      SessionManager.addSession(reply.id, maxParty, interaction.user);
+      const reply = await interaction.fetchReply();
+      SessionManager.addSession(
+        reply.id,
+        maxParty,
+        interaction.user,
+        interaction.channel.id
+      );
     } catch (e) {
       console.log(e);
       interaction.reply("Something broke. Great job.");
