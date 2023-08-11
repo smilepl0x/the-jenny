@@ -3,7 +3,7 @@
 The Jenny is a Discord bot that I made for a personal server with some friends, but feel free to spin her up if you think she'd be useful.
 ## Commands
 
-`/show battlenet_id`
+`/show battletag#id`
  - This will scrape Overwatch data from the Blizzard webpage and display QP stats in a message
 
 `/start game_name`
