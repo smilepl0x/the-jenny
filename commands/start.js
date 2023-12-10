@@ -1,6 +1,6 @@
 import { ActionRowBuilder, ButtonBuilder } from "@discordjs/builders";
 import { SlashCommandBuilder, ButtonStyle } from "discord.js";
-import config from "../config.json" assert { type: "json" };
+import config from "../config.json";
 import SessionManager from "../SessionManager.js";
 import { startSessionStringBuilder } from "../utils.js";
 
@@ -24,6 +24,10 @@ export const start = {
       new ButtonBuilder()
         .setCustomId("drop-out")
         .setLabel("Drop out")
+        .setStyle(ButtonStyle.Secondary),
+      new ButtonBuilder()
+        .setCustomId("in-a-bit")
+        .setLabel("In a little bit")
         .setStyle(ButtonStyle.Secondary)
     );
     try {
