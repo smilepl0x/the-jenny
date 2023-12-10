@@ -9,7 +9,7 @@ import {
   Events,
   GatewayIntentBits,
 } from "discord.js";
-import config from "./config.json" assert { type: "json" };
+import config from "./config.json";
 import SessionManager from "./SessionManager.js";
 import { ActionRowBuilder, ButtonBuilder } from "@discordjs/builders";
 import { startSessionStringBuilder } from "./utils.js";
@@ -95,6 +95,10 @@ client.on(Events.InteractionCreate, async (interaction) => {
         theSession.numParty--;
         theSession.removePartyMember(interaction.user);
       }
+    } else if (interaction.customId === "in-a-bit") {
+      interaction.channel.send(
+        `${interaction.member.nickname} will join soon!`
+      );
     }
 
     // Update button states
@@ -107,6 +111,10 @@ client.on(Events.InteractionCreate, async (interaction) => {
       new ButtonBuilder()
         .setCustomId("drop-out")
         .setLabel("Drop out")
+        .setStyle(ButtonStyle.Secondary),
+      new ButtonBuilder()
+        .setCustomId("in-a-bit")
+        .setLabel("In a bit")
         .setStyle(ButtonStyle.Secondary)
     );
 
