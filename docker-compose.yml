@@ -1,0 +1,51 @@
+# Use root/example as user/password credentials
+version: "3.9"
+
+services:
+  db:
+    image: mysql
+    command: --default-authentication-plugin=caching_sha2_password
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+    ports:
+      - "3306:3306"
+    volumes:
+      - "mysql:/var/lib/mysql"
+      - "./db:/docker-entrypoint-initdb.d"
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "mysql --user=root --password=$${MYSQL_ROOT_PASSWORD} \ --database 'jenny' -e 'SHOW TABLES'",
+        ]
+      interval: 20s
+      timeout: 5s
+      retries: 5
+
+  adminer:
+    image: adminer
+    restart: always
+    ports:
+      - 8080:8080
+
+  backend:
+    build: ./backend
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+    ports:
+      - "5000:3000"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  app:
+    build: ./app
+    environment:
+      TOKEN: ${TOKEN}
+      CLIENT_ID: ${CLIENT_ID}
+      GUILD_ID: ${GUILD_ID}
+
+volumes:
+  mysql:
+    external: false

@@ -9,7 +9,7 @@ import {
   Events,
   GatewayIntentBits,
 } from "discord.js";
-import config from "./config.json";
+import config from "./config.json" assert { type: "json" };
 import SessionManager from "./SessionManager.js";
 import { ActionRowBuilder, ButtonBuilder } from "@discordjs/builders";
 import { startSessionStringBuilder } from "./utils.js";
