@@ -1,6 +1,6 @@
 import { ActionRowBuilder, ButtonBuilder } from "@discordjs/builders";
 import { SlashCommandBuilder, ButtonStyle } from "discord.js";
-import config from "../config.json";
+import config from "../config.json" assert { type: "json" };
 import SessionManager from "../SessionManager.js";
 import { startSessionStringBuilder } from "../utils.js";
 
