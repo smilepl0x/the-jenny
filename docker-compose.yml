@@ -34,7 +34,7 @@ services:
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
     ports:
-      - "5000:3000"
+      - "5001:3000"
     depends_on:
       db:
         condition: service_healthy
