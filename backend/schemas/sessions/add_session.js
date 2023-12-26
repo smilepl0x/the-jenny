@@ -3,7 +3,7 @@ export const addSessionSchema = {
     body: {
       type: "object",
       additionalProperties: false,
-      required: ["channelId", "messageId", "partyMembers", "gameName"],
+      required: ["channelId", "messageId", "partyMembers", "game"],
       properties: {
         channelId: { type: "string" },
         messageId: { type: "string" },
@@ -13,7 +13,7 @@ export const addSessionSchema = {
             type: "string",
           },
         },
-        gameName: { type: "string" },
+        game: { type: "string" },
       },
     },
     response: {
@@ -21,6 +21,15 @@ export const addSessionSchema = {
         type: "object",
         properties: {
           status: { type: "string" },
+          role_id: { type: "string" },
+          game_name: { type: "string" },
+          max_party_size: { type: "string" },
+          partyMembers: {
+            type: "array",
+            items: {
+              type: "string",
+            },
+          },
         },
       },
     },
