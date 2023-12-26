@@ -72,29 +72,32 @@ client.on(Events.InteractionCreate, async (interaction) => {
 // Buttons
 client.on(Events.InteractionCreate, async (interaction) => {
   if (!interaction.isButton()) return;
-
-  const theSession = SessionManager.findSession(interaction.message.id);
-
   try {
-    // Shouldn't happen, but jic
-    if (!theSession) {
-      interaction.message.delete();
-      throw new Error("No session was found.");
-    }
+    const nickname = interaction.member.nickname || interaction.user.globalName;
+    let partyMembers;
+    let maxPartySize;
+    let partyFull;
 
-    const partyFull = theSession.numParty >= theSession.maxParty;
-    const alreadyIn = theSession.party.includes(interaction.user);
-
-    if (interaction.customId === "drop-in") {
-      if ((!partyFull || !theSession.maxParty) && !alreadyIn) {
-        theSession.numParty++;
-        theSession.addPartyMember(interaction.user);
-      }
-    } else if (interaction.customId === "drop-out") {
-      if (theSession.numParty > 0 && alreadyIn) {
-        theSession.numParty--;
-        theSession.removePartyMember(interaction.user);
-      }
+    if (
+      interaction.customId === "drop-in" ||
+      interaction.customId === "drop-out"
+    ) {
+      const url =
+        interaction.customId === "drop-in"
+          ? `http://backend:3000/session/join`
+          : `http://backend:3000/session/leave`;
+      const result = await fetch(url, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          partyMember: nickname,
+          messageId: interaction.message.id,
+        }),
+      });
+      const { party_members, max_party_size } = await result.json();
+      partyMembers = party_members;
+      maxPartySize = max_party_size;
+      partyFull = partyMembers?.length >= maxPartySize;
     } else if (interaction.customId === "in-a-bit") {
       interaction.channel.send(
         `${interaction.member.nickname} will join soon!`
@@ -120,13 +123,13 @@ client.on(Events.InteractionCreate, async (interaction) => {
 
     const [original, _] = interaction.message.content.split("\n");
     let interactionObj;
-    if (theSession.numParty > 0) {
+    if (partyMembers?.length > 0) {
       interactionObj = {
         content: startSessionStringBuilder({
           original,
-          numParty: theSession.numParty,
-          maxParty: theSession.maxParty,
-          party: theSession.party,
+          numParty: partyMembers?.length,
+          maxParty: maxPartySize,
+          party: partyMembers,
         }),
         components: [buttons],
       };
@@ -135,7 +138,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
         content: "Session ended",
         components: [],
       };
-      SessionManager.removeSession(theSession);
+      await fetch(`http://backend:3000/session/${interaction.message.id}`);
     }
     interaction.update(interactionObj);
   } catch (e) {

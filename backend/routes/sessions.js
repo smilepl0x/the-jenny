@@ -1,13 +1,7 @@
 import { addSessionSchema } from "../schemas/sessions/add_session.js";
 import { findGameQuery } from "../sql/games/find_game.js";
-import { addSessionQuery } from "../sql/sessions/add_session.js";
-import { joinSessionQuery } from "../sql/sessions/join_session.js";
-import { removeSessionQuery } from "../sql/sessions/remove_session.js";
+import { SESSIONS } from "../sql/sessions.js";
 import { replyHandler } from "./replyHandler.js";
-
-const MESSAGES = {
-  ADD_SUCCESS: "",
-};
 
 const routes = async (fastify, options) => {
   // Create a new session
@@ -17,11 +11,11 @@ const routes = async (fastify, options) => {
     async function handler(request, reply) {
       // Find the game in the game table if it already exists
       const [games, _a] = await fastify.mysql.query(findGameQuery, [
-        request.body.gameName,
-        request.body.gameName,
+        request.body.game,
+        request.body.game,
       ]);
       // Add the session
-      const [result, _b] = await fastify.mysql.query(addSessionQuery, [
+      const [result, _b] = await fastify.mysql.query(SESSIONS.ADD_SESSION, [
         request.body.channelId,
         request.body.messageId,
         JSON.stringify(request.body.partyMembers),
@@ -33,7 +27,7 @@ const routes = async (fastify, options) => {
 
   // Remove a session by message id
   fastify.delete("/session/:id", async function handler(request, reply) {
-    const [result, _] = await fastify.mysql.query(removeSessionQuery, [
+    const [result, _] = await fastify.mysql.query(SESSIONS.REMOVE_SESSION, [
       request.params.id,
     ]);
     replyHandler(reply, result?.affectedRows > 0);
@@ -41,15 +35,33 @@ const routes = async (fastify, options) => {
 
   // Join a session by message id
   fastify.patch("/session/join", async function handler(request, reply) {
-    const [result, _] = await fastify.mysql.query(joinSessionQuery, [
-      request.body.partyMember,
-      request.body.messageId,
-      request.body.partyMember,
+    const { partyMember, messageId } = request.body;
+    const [result, _b] = await fastify.mysql.query(SESSIONS.JOIN_SESSION, [
+      partyMember,
+      messageId,
+      partyMember,
     ]);
-    console.log(result);
-    replyHandler(reply, result?.changedRows > 0);
+    const [session, _a] = await fastify.mysql.query(
+      SESSIONS.GET_SESSION_WITH_GAME,
+      [messageId]
+    );
+    replyHandler(reply, result?.changedRows > 0, session[0]);
   });
   // session/leave/:id
+  // Join a session by message id
+  fastify.patch("/session/leave", async function handler(request, reply) {
+    const { partyMember, messageId } = request.body;
+    const [result, _b] = await fastify.mysql.query(SESSIONS.LEAVE_SESSION, [
+      partyMember,
+      messageId,
+      partyMember,
+    ]);
+    const [session, _a] = await fastify.mysql.query(
+      SESSIONS.GET_SESSION_WITH_GAME,
+      [messageId]
+    );
+    replyHandler(reply, result?.changedRows > 0, session[0]);
+  });
 };
 
 export default routes;

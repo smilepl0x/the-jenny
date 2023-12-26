@@ -31,37 +31,43 @@ export const start = {
         .setStyle(ButtonStyle.Secondary)
     );
     try {
-      // Check config for any roles/party sizes that might be available
-      let role;
-      let maxParty;
-      for (let game of config.games) {
-        if (
-          game.labels.includes(
-            interaction.options.getString("game").toLowerCase()
-          )
-        ) {
-          role = game.roleId;
-          maxParty = game.maxParty;
-        }
+      let game = interaction.options.getString("game").toLowerCase();
+      const channelId = interaction.channel.id;
+      const nickname =
+        interaction.member.nickname || interaction.user.globalName;
+
+      const result = await fetch(`http://backend:3000/game/${game}`, {
+        method: "GET",
+      });
+
+      const { role_id, game_name, max_party_size } = await result.json();
+
+      if (game_name) {
+        game = game_name;
       }
 
       await interaction.reply({
         content: startSessionStringBuilder({
-          user: interaction.user,
-          role,
-          game: interaction.options.getString("game"),
-          maxParty,
+          interaction,
+          role: role_id,
+          game,
+          maxParty: max_party_size,
+          party: [nickname],
         }),
         components: [buttons],
       });
 
       const reply = await interaction.fetchReply();
-      SessionManager.addSession(
-        reply.id,
-        maxParty,
-        interaction.user,
-        interaction.channel.id
-      );
+      await fetch(`http://backend:3000/session`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          channelId,
+          messageId: reply.id,
+          partyMembers: [nickname],
+          game,
+        }),
+      });
     } catch (e) {
       console.log(e);
       interaction.reply("Something broke. Great job.");
