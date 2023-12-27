@@ -13,6 +13,7 @@ fastify.register(fastifyMysql, {
   password: process.env.MYSQL_ROOT_PASSWORD,
   port: "3306",
   database: "jenny",
+  multipleStatements: true,
 });
 fastify.register(sessionRoutes);
 fastify.register(gamesRoutes);
