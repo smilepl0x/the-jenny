@@ -8,6 +8,7 @@ import {
   Collection,
   Events,
   GatewayIntentBits,
+  Partials,
 } from "discord.js";
 import config from "./config.json" assert { type: "json" };
 import SessionManager from "./SessionManager.js";
@@ -15,7 +16,14 @@ import { ActionRowBuilder, ButtonBuilder } from "@discordjs/builders";
 import { startSessionStringBuilder } from "./utils.js";
 
 // Create a new client instance
-const client = new Client({ intents: [GatewayIntentBits.Guilds] });
+const client = new Client({
+  intents: [
+    GatewayIntentBits.Guilds,
+    GatewayIntentBits.GuildMessages,
+    GatewayIntentBits.GuildMessageReactions,
+  ],
+  partials: [Partials.Message, Partials.Channel, Partials.Reaction],
+});
 // Set the client in SessionManager - TODO: Make this better.
 SessionManager.setClient(client);
 
@@ -97,7 +105,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
       const { party_members, max_party_size } = await result.json();
       partyMembers = party_members;
       maxPartySize = max_party_size;
-      partyFull = partyMembers?.length >= maxPartySize;
+      partyFull = maxPartySize ? partyMembers?.length >= maxPartySize : false;
     } else if (interaction.customId === "in-a-bit") {
       interaction.channel.send(
         `${interaction.member.nickname} will join soon!`
@@ -144,6 +152,22 @@ client.on(Events.InteractionCreate, async (interaction) => {
   } catch (e) {
     console.log(e);
     interaction.reply("Ya fucked up, Jimbo.");
+  }
+});
+
+// Register for games with an emoji
+client.on(Events.MessageReactionAdd, async (reaction, user) => {
+  const message = await reaction.message.fetch();
+  if (
+    message.content.includes("---GAME NOTIFICATIONS---") &&
+    message.author.id === process.env.CLIENT_ID
+  ) {
+    const gamesResponse = await fetch(
+      `http://backend:3000/game/${reaction._emoji.name}`
+    );
+    const json = await gamesResponse.json();
+    const role = await reaction.message.guild.roles.fetch(json.role_id);
+    await reaction.message.guild.members.addRole({ user, role });
   }
 });
 

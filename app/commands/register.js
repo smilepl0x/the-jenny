@@ -1,5 +1,6 @@
 import { SlashCommandBuilder } from "discord.js";
 
+// Dear god refactor all of this
 export const register = {
   data: new SlashCommandBuilder()
     .setName("register")
@@ -102,7 +103,38 @@ export const register = {
       // Add the role to the user.
       await interaction.member.roles.add(role);
 
-      // Add the message to the text channel or update it.
+      try {
+        const response = await fetch("http://backend:3000/games", {
+          method: "GET",
+        });
+        const responseJson = await response.json();
+
+        const announcement = `
+        ---GAME NOTIFICATIONS---\n\nReact with the corresponding emoji to be notified when a game starts!
+        \`\`\`${Object.values(responseJson)
+          .map((game) =>
+            typeof game === "object"
+              ? `${game.game_name} ${game.registration_emoji}`
+              : ""
+          )
+          .join("\n")}\`\`\`
+        `;
+        // Add the message to the text channel or update it.
+        const channel = await interaction.guild.channels.fetch(
+          process.env.GAME_ANNOUNCEMENT_CHANNEL_ID
+        );
+        const messages = await channel.messages.fetch();
+        const announcementMessage = messages.filter(
+          (message) => message.author.id === process.env.CLIENT_ID
+        );
+        if (announcementMessage.size > 0) {
+          announcementMessage.values().next().value.edit(announcement);
+        } else {
+          channel.send(announcement);
+        }
+      } catch (e) {
+        console.log("Something happened while sending the announcement", e);
+      }
 
       return interaction.reply({ content: emoji });
     } catch (e) {
