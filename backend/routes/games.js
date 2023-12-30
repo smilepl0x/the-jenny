@@ -3,7 +3,12 @@ import { findGameQuery } from "../sql/games/find_game.js";
 import { replyHandler } from "./replyHandler.js";
 
 const routes = async (fastify, options) => {
-  // Search games
+  // Get all games
+  fastify.get("/games", async function handler(request, reply) {
+    const [result, _] = await fastify.mysql.query(GAMES.FIND_GAMES);
+    return replyHandler(reply, true, result);
+  });
+  // Get game by identifier
   fastify.get("/game/:name", async function handler(request, reply) {
     // split reply handling out
     const [result, _] = await fastify.mysql.query(findGameQuery, [

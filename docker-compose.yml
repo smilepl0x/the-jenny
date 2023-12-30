@@ -19,7 +19,7 @@ services:
           "CMD-SHELL",
           "mysql --user=root --password=$${MYSQL_ROOT_PASSWORD} \ --database 'jenny' -e 'SHOW TABLES'",
         ]
-      interval: 20s
+      interval: 10s
       timeout: 5s
       retries: 10
 
@@ -43,6 +43,7 @@ services:
       TOKEN: ${TOKEN}
       CLIENT_ID: ${CLIENT_ID}
       GUILD_ID: ${GUILD_ID}
+      GAME_ANNOUNCEMENT_CHANNEL_ID: ${GAME_ANNOUNCEMENT_CHANNEL_ID}
 
 volumes:
   mysql:
