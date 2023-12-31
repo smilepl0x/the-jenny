@@ -1,4 +1,7 @@
 import { SlashCommandBuilder } from "discord.js";
+import { announceGameList } from "../utils/announceGameList.js";
+import { serviceFetch } from "../utils/serviceFetch.js";
+import { generateRandomHexArray } from "../utils/generateRandomHexArray.js";
 
 // Dear god refactor all of this
 export const register = {
@@ -32,114 +35,91 @@ export const register = {
     ),
   async execute(interaction) {
     try {
-      const game = interaction.options.getString("name");
-      const emoji = interaction.options.getString("emoji");
+      const gameName = interaction.options.getString("name");
+      const registrationEmoji = interaction.options.getString("emoji");
       const partySize = interaction.options.getInteger("size");
       const aliases =
         interaction.options.getString("aliases")?.split(",") || [];
 
-      // Ensure the game doesn't already exist
-      const findGameUrl = "http://backend:3000/game/";
-      const { game_name } = await (await fetch(`${findGameUrl}${game}`)).json();
-      if (game_name) {
-        return interaction.reply({
-          content: `${game_name} already exists`,
-        });
-      }
-
-      // Ensure the alias doesnt already exist
-      for (const alias of aliases) {
-        const { game_name } = await (
-          await fetch(`${findGameUrl}${alias}`)
-        ).json();
-        if (game_name) {
-          return interaction.reply({
-            content: `The alias ${alias} already exists for the game ${game_name}`,
-          });
-        }
-      }
-
       // Ensure the emoji is... an emoji
-      if (/\P{Emoji}/u.test(emoji)) {
+      if (/\P{Emoji}/u.test(registrationEmoji)) {
         return interaction.reply({
           content: "Your emoji doesn't look right. Try again.",
         });
       }
 
-      // Ensure the emoji doesn't already exist on another game.
-      const { game_name: emoji_game_name } = await (
-        await fetch(`${findGameUrl}${emoji}`)
-      ).json();
-      if (emoji_game_name) {
-        return interaction.reply({
-          content: `The game ${emoji_game_name} already exists with registration emoji ${emoji}`,
+      // Ensure the game name, emoji, or alias doesn't exist already
+      try {
+        const { games, status } = await serviceFetch({
+          path: "/game",
+          method: "POST",
+          body: { gameName, registrationEmoji, aliases },
         });
+        if (status !== 0) throw new Error("Unable to search for game");
+        if (games?.length) {
+          let errors = [];
+          games.forEach((game) => {
+            if (game.game_name === gameName) {
+              errors.push(`${gameName} is already registered.`);
+            }
+            if (game.registration_emoji === registrationEmoji) {
+              errors.push(
+                `${registrationEmoji} is already registered to ${game.game_name}`
+              );
+            }
+            aliases.forEach((alias) => {
+              game.aliases.includes(alias)
+                ? errors.push(
+                    `Alias ${alias} is already registered to ${game.game_name}`
+                  )
+                : null;
+            });
+          });
+          return interaction.reply(errors.join(" "));
+        }
+      } catch (e) {
+        throw e;
       }
 
       // Phew, i think we made it. Create the role.
-      const generateRandomHexArray = () => {
-        // TODO: Move this elsewhere.
-        const getHex = () => Math.random() * (255 - 0);
-        return [getHex(), getHex(), getHex()];
-      };
       const role = await interaction.guild.roles.create({
-        name: game,
+        name: gameName,
         color: generateRandomHexArray(),
       });
+      if (!role.id) throw new Error("Unable to create role");
 
-      // Add the role to the database
-      await fetch(`http://backend:3000/game/add`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          roleId: role.id,
-          gameName: game,
-          maxPartySize: partySize,
-          registrationEmoji: emoji,
-          aliases,
-        }),
-      });
+      // // Add the role to the database
+      try {
+        const { status } = await serviceFetch({
+          path: "/game/add",
+          method: "POST",
+          body: {
+            roleId: role.id,
+            gameName,
+            maxPartySize: partySize,
+            registrationEmoji,
+            aliases,
+          },
+        });
+        if (status !== 0) throw new Error("Failed to add game to db");
+      } catch (e) {
+        throw e;
+      }
 
       // Add the role to the user.
       await interaction.member.roles.add(role);
 
-      try {
-        const response = await fetch("http://backend:3000/games", {
-          method: "GET",
-        });
-        const responseJson = await response.json();
+      // Send the message to the announcement channel
+      await announceGameList(interaction.client);
 
-        const announcement = `
-        ---GAME NOTIFICATIONS---\n\nReact with the corresponding emoji to be notified when a game starts!
-        \`\`\`${Object.values(responseJson)
-          .map((game) =>
-            typeof game === "object"
-              ? `${game.game_name} ${game.registration_emoji}`
-              : ""
-          )
-          .join("\n")}\`\`\`
-        `;
-        // Add the message to the text channel or update it.
-        const channel = await interaction.guild.channels.fetch(
-          process.env.GAME_ANNOUNCEMENT_CHANNEL_ID
-        );
-        const messages = await channel.messages.fetch();
-        const announcementMessage = messages.filter(
-          (message) => message.author.id === process.env.CLIENT_ID
-        );
-        if (announcementMessage.size > 0) {
-          announcementMessage.values().next().value.edit(announcement);
-        } else {
-          channel.send(announcement);
-        }
-      } catch (e) {
-        console.log("Something happened while sending the announcement", e);
-      }
-
-      return interaction.reply({ content: emoji });
+      return interaction.reply(
+        `${gameName} was registered with emoji ${registrationEmoji} ${
+          aliases.length ? `and aliases ${aliases}` : ""
+        }`
+      );
     } catch (e) {
       console.log(e);
-      await interaction.editReply("Something broke. Great job.");
+      await interaction.reply("Something broke. Great job.");
     }
   },
 };

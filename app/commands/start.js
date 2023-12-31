@@ -1,6 +1,7 @@
 import { ActionRowBuilder, ButtonBuilder } from "@discordjs/builders";
 import { SlashCommandBuilder, ButtonStyle } from "discord.js";
 import { startSessionStringBuilder } from "../utils.js";
+import { serviceFetch } from "../utils/serviceFetch.js";
 
 export const start = {
   data: new SlashCommandBuilder()
@@ -34,11 +35,13 @@ export const start = {
       const nickname =
         interaction.member.nickname || interaction.user.globalName;
 
-      const result = await fetch(`http://backend:3000/game/${game}`, {
-        method: "GET",
+      const { games } = await serviceFetch({
+        path: "/game",
+        method: "POST",
+        body: { gameName: game, aliases: game },
       });
 
-      const { role_id, game_name, max_party_size } = await result.json();
+      const { role_id, game_name, max_party_size } = games?.[0] || {};
 
       if (game_name) {
         game = game_name;
@@ -56,15 +59,15 @@ export const start = {
       });
 
       const reply = await interaction.fetchReply();
-      await fetch(`http://backend:3000/session`, {
+      await serviceFetch({
+        path: "/session",
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+        body: {
           channelId,
           messageId: reply.id,
           partyMembers: [nickname],
           game,
-        }),
+        },
       });
     } catch (e) {
       console.log(e);
