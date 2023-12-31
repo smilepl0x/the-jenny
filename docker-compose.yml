@@ -8,8 +8,6 @@ services:
     restart: always
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-    ports:
-      - "3306:3306"
     volumes:
       - "mysql:/var/lib/mysql"
       - "./db:/docker-entrypoint-initdb.d"
@@ -23,16 +21,17 @@ services:
       timeout: 5s
       retries: 10
 
-  adminer:
-    image: adminer
-    restart: always
-    ports:
-      - 8080:8080
+  # adminer:
+  #   image: adminer
+  #   restart: always
+  #   ports:
+  #     - 8080:8080
 
   backend:
     build: ./backend
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      BACKEND_PORT: ${BACKEND_PORT}
     depends_on:
       db:
         condition: service_healthy
@@ -44,6 +43,10 @@ services:
       CLIENT_ID: ${CLIENT_ID}
       GUILD_ID: ${GUILD_ID}
       GAME_ANNOUNCEMENT_CHANNEL_ID: ${GAME_ANNOUNCEMENT_CHANNEL_ID}
+      BACKEND_DOMAIN: ${BACKEND_DOMAIN}
+      BACKEND_PORT: ${BACKEND_PORT}
+    depends_on:
+      - backend
 
 volumes:
   mysql:

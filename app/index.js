@@ -14,6 +14,8 @@ import config from "./config.json" assert { type: "json" };
 import SessionManager from "./SessionManager.js";
 import { ActionRowBuilder, ButtonBuilder } from "@discordjs/builders";
 import { startSessionStringBuilder } from "./utils.js";
+import { announceGameList } from "./utils/announceGameList.js";
+import { serviceFetch } from "./utils/serviceFetch.js";
 
 // Create a new client instance
 const client = new Client({
@@ -51,8 +53,9 @@ for (const file of commandFiles) {
 
 // When the client is ready, run this code (only once)
 // We use 'c' for the event parameter to keep it separate from the already defined 'client'
-client.once(Events.ClientReady, (c) => {
+client.once(Events.ClientReady, async (c) => {
   console.log(`Ready! Logged in as ${c.user.tag}`);
+  await announceGameList(client);
 });
 
 // Slash commands
@@ -90,19 +93,15 @@ client.on(Events.InteractionCreate, async (interaction) => {
       interaction.customId === "drop-in" ||
       interaction.customId === "drop-out"
     ) {
-      const url =
-        interaction.customId === "drop-in"
-          ? `http://backend:3000/session/join`
-          : `http://backend:3000/session/leave`;
-      const result = await fetch(url, {
+      const path = interaction.customId === "drop-in" ? "join" : "leave";
+      const { party_members, max_party_size } = await serviceFetch({
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+        path: `/session/${path}`,
+        body: {
           partyMember: nickname,
           messageId: interaction.message.id,
-        }),
+        },
       });
-      const { party_members, max_party_size } = await result.json();
       partyMembers = party_members;
       maxPartySize = max_party_size;
       partyFull = maxPartySize ? partyMembers?.length >= maxPartySize : false;
@@ -146,7 +145,10 @@ client.on(Events.InteractionCreate, async (interaction) => {
         content: "Session ended",
         components: [],
       };
-      await fetch(`http://backend:3000/session/${interaction.message.id}`);
+      await serviceFetch({
+        path: `/session/${interaction.message.id}`,
+        method: "DELETE",
+      });
     }
     interaction.update(interactionObj);
   } catch (e) {
@@ -157,17 +159,23 @@ client.on(Events.InteractionCreate, async (interaction) => {
 
 // Register for games with an emoji
 client.on(Events.MessageReactionAdd, async (reaction, user) => {
-  const message = await reaction.message.fetch();
-  if (
-    message.content.includes("---GAME NOTIFICATIONS---") &&
-    message.author.id === process.env.CLIENT_ID
-  ) {
-    const gamesResponse = await fetch(
-      `http://backend:3000/game/${reaction._emoji.name}`
-    );
-    const json = await gamesResponse.json();
-    const role = await reaction.message.guild.roles.fetch(json.role_id);
-    await reaction.message.guild.members.addRole({ user, role });
+  try {
+    const message = await reaction.message.fetch();
+    if (
+      message.content.includes("---GAME NOTIFICATIONS---") &&
+      message.author.id === process.env.CLIENT_ID
+    ) {
+      const { games } = await serviceFetch({
+        path: `/game`,
+        method: "POST",
+        body: { registrationEmoji: reaction._emoji.name },
+      });
+      const role = await reaction.message.guild.roles.fetch(games?.[0].role_id);
+      await reaction.message.guild.members.addRole({ user, role });
+      await user.send(`You've been registered to ${games?.[0].game_name}!`);
+    }
+  } catch (e) {
+    console.log(e);
   }
 });
 

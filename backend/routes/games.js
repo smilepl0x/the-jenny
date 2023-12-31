@@ -1,5 +1,4 @@
 import { GAMES } from "../sql/games.js";
-import { findGameQuery } from "../sql/games/find_game.js";
 import { replyHandler } from "./replyHandler.js";
 
 const routes = async (fastify, options) => {
@@ -8,13 +7,16 @@ const routes = async (fastify, options) => {
     const [result, _] = await fastify.mysql.query(GAMES.FIND_GAMES);
     return replyHandler(reply, true, result);
   });
+
   // Get game by identifier
-  fastify.get("/game/:name", async function handler(request, reply) {
-    // split reply handling out
-    const [result, _] = await fastify.mysql.query(findGameQuery, [
-      request.params.name,
+  fastify.post("/game", async function handler(request, reply) {
+    const { gameName, registrationEmoji = "", aliases } = request.body;
+    const [result, _] = await fastify.mysql.query(GAMES.FIND_GAME, [
+      gameName,
+      registrationEmoji,
+      aliases,
     ]);
-    return replyHandler(reply, true, result[1][0]);
+    return replyHandler(reply, true, { games: result.slice(3).flat() });
   });
 
   // Add a game
