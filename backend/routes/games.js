@@ -10,11 +10,15 @@ const routes = async (fastify, options) => {
 
   // Get game by identifier
   fastify.post("/game", async function handler(request, reply) {
-    const { gameName, registrationEmoji = "", aliases } = request.body;
+    const {
+      gameName = "",
+      registrationEmoji = "",
+      aliases = [],
+    } = request.body;
     const [result, _] = await fastify.mysql.query(GAMES.FIND_GAME, [
       gameName,
       registrationEmoji,
-      aliases,
+      JSON.stringify(aliases),
     ]);
     return replyHandler(reply, true, { games: result.slice(3).flat() });
   });

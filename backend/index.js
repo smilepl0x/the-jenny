@@ -14,6 +14,7 @@ fastify.register(fastifyMysql, {
   port: "3306",
   database: "jenny",
   multipleStatements: true,
+  charset: "utf8mb4_0900_ai_ci",
 });
 fastify.register(sessionRoutes);
 fastify.register(gamesRoutes);

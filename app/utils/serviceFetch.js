@@ -1,8 +1,9 @@
 // Wrapper around fetch to return json with out a bunch of ugly awaits
 export const serviceFetch = async ({ path, method = "GET", body = null }) => {
   console.log(
-    "serviceFetch::",
-    `http://${process.env.BACKEND_DOMAIN}:${process.env.BACKEND_PORT}${path}`
+    "serviceFetch request::",
+    path,
+    body ? JSON.stringify(body) : null
   );
   try {
     const response = await fetch(
@@ -14,6 +15,7 @@ export const serviceFetch = async ({ path, method = "GET", body = null }) => {
       }
     );
     const json = await response?.json();
+    console.log("serviceFetch response:: ", path, json);
     return json || {};
   } catch (e) {
     console.log(e);

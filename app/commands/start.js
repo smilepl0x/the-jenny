@@ -38,7 +38,7 @@ export const start = {
       const { games } = await serviceFetch({
         path: "/game",
         method: "POST",
-        body: { gameName: game, aliases: game },
+        body: { gameName: game, aliases: [game] },
       });
 
       const { role_id, game_name, max_party_size } = games?.[0] || {};

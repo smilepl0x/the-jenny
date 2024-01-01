@@ -47,8 +47,8 @@ const routes = async (fastify, options) => {
     );
     replyHandler(reply, result?.changedRows > 0, session[0]);
   });
-  // session/leave/:id
-  // Join a session by message id
+
+  // Leave a session by message id
   fastify.patch("/session/leave", async function handler(request, reply) {
     const { partyMember, messageId } = request.body;
     const [result, _b] = await fastify.mysql.query(SESSIONS.LEAVE_SESSION, [
