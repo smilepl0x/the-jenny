@@ -10,7 +10,6 @@ import {
   GatewayIntentBits,
   Partials,
 } from "discord.js";
-import config from "./config.json" assert { type: "json" };
 import SessionManager from "./SessionManager.js";
 import { ActionRowBuilder, ButtonBuilder } from "@discordjs/builders";
 import { startSessionStringBuilder } from "./utils.js";
@@ -180,4 +179,4 @@ client.on(Events.MessageReactionAdd, async (reaction, user) => {
 });
 
 // Log in to Discord with your client's token
-client.login(config.token);
+client.login(process.env.TOKEN);
