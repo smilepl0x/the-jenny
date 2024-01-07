@@ -19,10 +19,10 @@ fastify.register(fastifyMysql, {
 fastify.register(sessionRoutes);
 fastify.register(gamesRoutes);
 
-// Run the server!
 try {
+  // Run the server!
   const { ADDRESS = "localhost", PORT = "3000" } = process.env;
-  await fastify.listen({ host: ADDRESS, port: PORT });
+  fastify.listen({ host: ADDRESS, port: PORT });
 } catch (err) {
   fastify.log.error(err);
   process.exit(1);

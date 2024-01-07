@@ -1,9 +1,26 @@
 import { addSessionSchema } from "../schemas/sessions/add_session.js";
+import { sessionsSchema } from "../schemas/sessions/sessions.js";
 import { findGameQuery } from "../sql/games/find_game.js";
 import { SESSIONS } from "../sql/sessions.js";
 import { replyHandler } from "./replyHandler.js";
 
 const routes = async (fastify, options) => {
+  // Delete expired sessions, return affected
+  fastify.patch(
+    "/sessions",
+    sessionsSchema,
+    async function handler(request, reply) {
+      const [expiredSessions] = await fastify.mysql.query(
+        SESSIONS.GET_EXPIRED_SESSIONS,
+        [request.query.sl]
+      );
+      await fastify.mysql.query(SESSIONS.REMOVE_EXPIRED_SESSIONS, [
+        request.query.sl,
+      ]);
+      replyHandler(reply, true, expiredSessions);
+    }
+  );
+
   // Create a new session
   fastify.post(
     "/session",
