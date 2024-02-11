@@ -1,1 +1,0 @@
-export const findGameQuery = `SELECT @game_name := ? COLLATE utf8mb4_bin; SELECT * FROM games WHERE game_name=@game_name OR JSON_CONTAINS(aliases, JSON_QUOTE(@game_name), '$') OR registration_emoji=@game_name;`;

@@ -66,7 +66,7 @@ export const start = {
           channelId,
           messageId: reply.id,
           partyMembers: [nickname],
-          game,
+          gameName: game,
         },
       });
     } catch (e) {

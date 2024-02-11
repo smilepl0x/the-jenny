@@ -1,10 +1,16 @@
 import { addSessionSchema } from "../schemas/sessions/add_session.js";
 import { sessionsSchema } from "../schemas/sessions/sessions.js";
-import { findGameQuery } from "../sql/games/find_game.js";
+import { GAMES } from "../sql/games.js";
 import { SESSIONS } from "../sql/sessions.js";
 import { replyHandler } from "./replyHandler.js";
 
 const routes = async (fastify, options) => {
+  // Get all sessions in progress
+  fastify.get("/sessions", async function handler(request, reply) {
+    const [sessions] = await fastify.mysql.query(SESSIONS.GET_SESSIONS);
+    replyHandler(reply, true, { sessions: Object.values(sessions) });
+  });
+
   // Delete expired sessions, return affected
   fastify.patch(
     "/sessions",
@@ -27,16 +33,22 @@ const routes = async (fastify, options) => {
     addSessionSchema,
     async function handler(request, reply) {
       // Find the game in the game table if it already exists
-      const [games, _a] = await fastify.mysql.query(findGameQuery, [
-        request.body.game,
-        request.body.game,
+      const {
+        gameName = "",
+        registrationEmoji = "",
+        aliases = [],
+      } = request.body;
+      const [games, _a] = await fastify.mysql.query(GAMES.FIND_GAME, [
+        gameName,
+        registrationEmoji,
+        JSON.stringify(aliases),
       ]);
       // Add the session
       const [result, _b] = await fastify.mysql.query(SESSIONS.ADD_SESSION, [
         request.body.channelId,
         request.body.messageId,
         JSON.stringify(request.body.partyMembers),
-        games[0]?.game_id || null, // include a reference to the game if it existed
+        games.slice(3).flat()[0]?.game_id || null, // include a reference to the game if it existed
       ]);
       replyHandler(reply, result?.affectedRows > 0);
     }

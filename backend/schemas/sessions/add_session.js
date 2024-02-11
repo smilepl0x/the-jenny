@@ -3,7 +3,7 @@ export const addSessionSchema = {
     body: {
       type: "object",
       additionalProperties: false,
-      required: ["channelId", "messageId", "partyMembers", "game"],
+      required: ["channelId", "messageId", "partyMembers", "gameName"],
       properties: {
         channelId: { type: "string" },
         messageId: { type: "string" },
@@ -13,7 +13,7 @@ export const addSessionSchema = {
             type: "string",
           },
         },
-        game: { type: "string" },
+        gameName: { type: "string" },
       },
     },
     response: {
