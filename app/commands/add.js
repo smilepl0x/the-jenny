@@ -1,5 +1,4 @@
 import { SlashCommandBuilder } from "discord.js";
-import { announceGameList } from "../utils/announceGameList.js";
 import { serviceFetch } from "../utils/serviceFetch.js";
 import { generateRandomHexArray } from "../utils/generateRandomHexArray.js";
 
@@ -87,9 +86,6 @@ export const add = {
 
       // Add the role to the user.
       await interaction.member.roles.add(role);
-
-      // Send the message to the announcement channel
-      await announceGameList(interaction.client);
 
       return interaction.reply(
         `${gameName} was registered ${

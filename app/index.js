@@ -13,7 +13,6 @@ import {
 import SessionManager from "./SessionManager.js";
 import { ActionRowBuilder, ButtonBuilder } from "@discordjs/builders";
 import { startSessionStringBuilder } from "./utils.js";
-import { announceGameList } from "./utils/announceGameList.js";
 import { serviceFetch } from "./utils/serviceFetch.js";
 
 // Create a new client instance
