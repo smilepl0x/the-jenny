@@ -54,7 +54,6 @@ for (const file of commandFiles) {
 // We use 'c' for the event parameter to keep it separate from the already defined 'client'
 client.once(Events.ClientReady, async (c) => {
   console.log(`Ready! Logged in as ${c.user.tag}`);
-  await announceGameList(client);
 });
 
 // Slash commands
@@ -159,25 +158,14 @@ client.on(Events.InteractionCreate, async (interaction) => {
   }
 });
 
-// Register for games with an emoji
-client.on(Events.MessageReactionAdd, async (reaction, user) => {
+// Autocompletes
+client.on(Events.InteractionCreate, async (interaction) => {
+  if (!interaction.isAutocomplete()) return;
   try {
-    const message = await reaction.message.fetch();
-    if (
-      message.content.includes("---GAME NOTIFICATIONS---") &&
-      message.author.id === process.env.CLIENT_ID
-    ) {
-      const { games } = await serviceFetch({
-        path: `/game`,
-        method: "POST",
-        body: { registrationEmoji: reaction._emoji.name },
-      });
-      const role = await reaction.message.guild.roles.fetch(games?.[0].role_id);
-      await reaction.message.guild.members.addRole({ user, role });
-      await user.send(`You've been registered to ${games?.[0].game_name}!`);
-    }
+    const command = interaction.client.commands.get(interaction.commandName);
+    command.autocomplete(interaction);
   } catch (e) {
-    console.log(e);
+    console.error(e);
   }
 });
 

@@ -33,14 +33,9 @@ const routes = async (fastify, options) => {
     addSessionSchema,
     async function handler(request, reply) {
       // Find the game in the game table if it already exists
-      const {
-        gameName = "",
-        registrationEmoji = "",
-        aliases = [],
-      } = request.body;
+      const { gameName = "", aliases = [] } = request.body;
       const [games, _a] = await fastify.mysql.query(GAMES.FIND_GAME, [
         gameName,
-        registrationEmoji,
         JSON.stringify(aliases),
       ]);
       // Add the session

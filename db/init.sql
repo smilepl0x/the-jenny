@@ -14,7 +14,6 @@ CREATE TABLE `games` (
   `role_id` varchar(20) NOT NULL,
   `game_name` varchar(100) NOT NULL,
   `max_party_size` int DEFAULT NULL,
-  `registration_emoji` char(1) NOT NULL,
   `aliases` json DEFAULT NULL,
   PRIMARY KEY (`game_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
