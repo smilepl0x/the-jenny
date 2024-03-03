@@ -84,9 +84,12 @@ client.on(Events.InteractionCreate, async (interaction) => {
   if (!interaction.isButton()) return;
   try {
     const nickname = interaction.member.nickname || interaction.user.globalName;
-    let partyMembers;
-    let maxPartySize;
-    let partyFull;
+    const { party_members, max_party_size } = await serviceFetch({
+      path: `/session/${interaction.message.id}`,
+    });
+    let partyMembers = party_members;
+    let maxPartySize = max_party_size;
+    let partyFull = false;
 
     if (
       interaction.customId === "drop-in" ||
@@ -129,7 +132,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
 
     const [original, _] = interaction.message.content.split("\n");
     let interactionObj;
-    if (partyMembers?.length > 0) {
+    if (partyMembers?.length > 0 || interaction.customId === "in-a-bit") {
       interactionObj = {
         content: startSessionStringBuilder({
           original,

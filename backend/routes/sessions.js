@@ -54,6 +54,15 @@ const routes = async (fastify, options) => {
     }
   );
 
+  // Get a session by message id - has game info included.
+  fastify.get("/session/:id", async function handler(request, reply) {
+    const [result, _] = await fastify.mysql.query(
+      SESSIONS.GET_SESSION_WITH_GAME,
+      [request.params.id]
+    );
+    replyHandler(reply, result.length > 0, result[0]);
+  });
+
   // Remove a session by message id
   fastify.delete("/session/:id", async function handler(request, reply) {
     const [result, _] = await fastify.mysql.query(SESSIONS.REMOVE_SESSION, [
