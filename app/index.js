@@ -54,7 +54,6 @@ for (const file of commandFiles) {
 // We use 'c' for the event parameter to keep it separate from the already defined 'client'
 client.once(Events.ClientReady, async (c) => {
   console.log(`Ready! Logged in as ${c.user.tag}`);
-  await announceGameList(client);
 });
 
 // Slash commands
@@ -84,9 +83,12 @@ client.on(Events.InteractionCreate, async (interaction) => {
   if (!interaction.isButton()) return;
   try {
     const nickname = interaction.member.nickname || interaction.user.globalName;
-    let partyMembers;
-    let maxPartySize;
-    let partyFull;
+    const { party_members, max_party_size } = await serviceFetch({
+      path: `/session/${interaction.message.id}`,
+    });
+    let partyMembers = party_members;
+    let maxPartySize = max_party_size;
+    let partyFull = false;
 
     if (
       interaction.customId === "drop-in" ||
@@ -129,7 +131,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
 
     const [original, _] = interaction.message.content.split("\n");
     let interactionObj;
-    if (partyMembers?.length > 0) {
+    if (partyMembers?.length > 0 || interaction.customId === "in-a-bit") {
       interactionObj = {
         content: startSessionStringBuilder({
           original,
@@ -156,25 +158,14 @@ client.on(Events.InteractionCreate, async (interaction) => {
   }
 });
 
-// Register for games with an emoji
-client.on(Events.MessageReactionAdd, async (reaction, user) => {
+// Autocompletes
+client.on(Events.InteractionCreate, async (interaction) => {
+  if (!interaction.isAutocomplete()) return;
   try {
-    const message = await reaction.message.fetch();
-    if (
-      message.content.includes("---GAME NOTIFICATIONS---") &&
-      message.author.id === process.env.CLIENT_ID
-    ) {
-      const { games } = await serviceFetch({
-        path: `/game`,
-        method: "POST",
-        body: { registrationEmoji: reaction._emoji.name },
-      });
-      const role = await reaction.message.guild.roles.fetch(games?.[0].role_id);
-      await reaction.message.guild.members.addRole({ user, role });
-      await user.send(`You've been registered to ${games?.[0].game_name}!`);
-    }
+    const command = interaction.client.commands.get(interaction.commandName);
+    command.autocomplete(interaction);
   } catch (e) {
-    console.log(e);
+    console.error(e);
   }
 });
 

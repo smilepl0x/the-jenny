@@ -1,125 +1,56 @@
 import { SlashCommandBuilder } from "discord.js";
-import { announceGameList } from "../utils/announceGameList.js";
 import { serviceFetch } from "../utils/serviceFetch.js";
-import { generateRandomHexArray } from "../utils/generateRandomHexArray.js";
 
-// Dear god refactor all of this
 export const register = {
   data: new SlashCommandBuilder()
     .setName("register")
-    .setDescription("Register a new game")
+    .setDescription("Get notified when a game starts")
     .addStringOption((option) =>
       option
         .setName("name")
-        .setDescription("The name of the new game you want to add.")
+        .setDescription("The name or alias of the game")
         .setMaxLength(30)
         .setRequired(true)
-    )
-    .addStringOption((option) =>
-      option
-        .setName("emoji")
-        .setDescription("An emoji used to self-register for this game.")
-        .setMaxLength(20)
-        .setRequired(true)
-    )
-    .addIntegerOption((option) =>
-      option
-        .setName("size")
-        .setDescription("The maximum party size for this game.")
-    )
-    .addStringOption((option) =>
-      option
-        .setName("aliases")
-        .setDescription("A comma separated list of aliases for this game.")
-        .setMaxLength(50)
+        .setAutocomplete(true)
     ),
+  async autocomplete(interaction) {
+    // TODO: may need to keep local cache for this at some point
+    const { games } = await serviceFetch({ path: "/games" });
+    const value = interaction.options.getFocused().toLowerCase();
+    const filteredGames = games.filter(
+      (game) =>
+        game.game_name.toLowerCase().includes(value) ||
+        game.aliases.some((alias) => alias.toLowerCase().includes(value))
+    );
+    await interaction.respond(
+      filteredGames.map((filteredGame) => ({
+        name: filteredGame.game_name,
+        value: filteredGame.game_name,
+      }))
+    );
+  },
   async execute(interaction) {
     try {
-      const gameName = interaction.options.getString("name");
-      const registrationEmoji = interaction.options.getString("emoji");
-      const partySize = interaction.options.getInteger("size");
-      const aliases =
-        interaction.options.getString("aliases")?.split(",") || [];
-
-      // Ensure the emoji is... an emoji
-      if (/\P{Emoji}/u.test(registrationEmoji)) {
-        return interaction.reply({
-          content: "Your emoji doesn't look right. Try again.",
+      const value = interaction.options.getString("name");
+      // TODO: Call repeated on execute. Another good reason for local cache.
+      const { games } = await serviceFetch({ path: "/games" });
+      const game = games.find((game) => game.game_name === value);
+      if (!!game) {
+        const role = await interaction.guild.roles.fetch(game.role_id);
+        if (!role)
+          throw new Error(`No role ${game.role_id}`, interaction.guild.roles);
+        interaction.guild.members.addRole({
+          user: interaction.user,
+          role: role,
         });
+        await interaction.reply("Done.");
+      } else {
+        await interaction.reply(
+          "That game hasn't been added to this channel. To add it, use the `/add` command."
+        );
       }
-
-      // Ensure the game name, emoji, or alias doesn't exist already
-      try {
-        const { games, status } = await serviceFetch({
-          path: "/game",
-          method: "POST",
-          body: { gameName, registrationEmoji, aliases },
-        });
-        if (status !== 0) throw new Error("Unable to search for game");
-        if (games?.length) {
-          let errors = [];
-          games.forEach((game) => {
-            if (game.game_name === gameName) {
-              errors.push(`${gameName} is already registered.`);
-            }
-            if (game.registration_emoji === registrationEmoji) {
-              errors.push(
-                `${registrationEmoji} is already registered to ${game.game_name}`
-              );
-            }
-            aliases.forEach((alias) => {
-              game.aliases.includes(alias)
-                ? errors.push(
-                    `Alias ${alias} is already registered to ${game.game_name}`
-                  )
-                : null;
-            });
-          });
-          return interaction.reply(errors.join(" "));
-        }
-      } catch (e) {
-        throw e;
-      }
-
-      // Phew, i think we made it. Create the role.
-      const role = await interaction.guild.roles.create({
-        name: gameName,
-        color: generateRandomHexArray(),
-      });
-      if (!role.id) throw new Error("Unable to create role");
-
-      // // Add the role to the database
-      try {
-        const { status } = await serviceFetch({
-          path: "/game/add",
-          method: "POST",
-          body: {
-            roleId: role.id,
-            gameName,
-            maxPartySize: partySize,
-            registrationEmoji,
-            aliases,
-          },
-        });
-        if (status !== 0) throw new Error("Failed to add game to db");
-      } catch (e) {
-        throw e;
-      }
-
-      // Add the role to the user.
-      await interaction.member.roles.add(role);
-
-      // Send the message to the announcement channel
-      await announceGameList(interaction.client);
-
-      return interaction.reply(
-        `${gameName} was registered with emoji ${registrationEmoji} ${
-          aliases.length ? `and aliases ${aliases}` : ""
-        }`
-      );
     } catch (e) {
-      console.log(e);
-      await interaction.reply("Something broke. Great job.");
+      interaction.reply("Something broke. Great job.");
     }
   },
 };

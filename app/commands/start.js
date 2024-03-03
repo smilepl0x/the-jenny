@@ -26,7 +26,7 @@ export const start = {
         .setStyle(ButtonStyle.Secondary),
       new ButtonBuilder()
         .setCustomId("in-a-bit")
-        .setLabel("In a little bit")
+        .setLabel("In a bit")
         .setStyle(ButtonStyle.Secondary)
     );
     try {

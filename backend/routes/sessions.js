@@ -33,14 +33,9 @@ const routes = async (fastify, options) => {
     addSessionSchema,
     async function handler(request, reply) {
       // Find the game in the game table if it already exists
-      const {
-        gameName = "",
-        registrationEmoji = "",
-        aliases = [],
-      } = request.body;
+      const { gameName = "", aliases = [] } = request.body;
       const [games, _a] = await fastify.mysql.query(GAMES.FIND_GAME, [
         gameName,
-        registrationEmoji,
         JSON.stringify(aliases),
       ]);
       // Add the session
@@ -53,6 +48,15 @@ const routes = async (fastify, options) => {
       replyHandler(reply, result?.affectedRows > 0);
     }
   );
+
+  // Get a session by message id - has game info included.
+  fastify.get("/session/:id", async function handler(request, reply) {
+    const [result, _] = await fastify.mysql.query(
+      SESSIONS.GET_SESSION_WITH_GAME,
+      [request.params.id]
+    );
+    replyHandler(reply, result.length > 0, result[0]);
+  });
 
   // Remove a session by message id
   fastify.delete("/session/:id", async function handler(request, reply) {
