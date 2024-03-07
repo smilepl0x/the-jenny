@@ -43,8 +43,8 @@ export const add = {
         if (games?.length) {
           let errors = [];
           games.forEach((game) => {
-            if (game.game_name === gameName) {
-              errors.push(`${gameName} is already added to this server.`);
+            if (game.game_name.toLowerCase() === gameName.toLowerCase()) {
+              errors.push(`${game.game_name} is already added to this server.`);
             }
             aliases.forEach((alias) => {
               game.aliases.includes(alias)

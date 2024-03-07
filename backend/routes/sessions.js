@@ -43,7 +43,7 @@ const routes = async (fastify, options) => {
         request.body.channelId,
         request.body.messageId,
         JSON.stringify(request.body.partyMembers),
-        games.slice(3).flat()[0]?.game_id || null, // include a reference to the game if it existed
+        games.slice(2).flat()[0]?.game_id || null, // include a reference to the game if it existed
       ]);
       replyHandler(reply, result?.affectedRows > 0);
     }
