@@ -44,12 +44,12 @@ export const add = {
           let errors = [];
           games.forEach((game) => {
             if (game.game_name === gameName) {
-              errors.push(`${gameName} is already registered.`);
+              errors.push(`${gameName} is already added to this server.`);
             }
             aliases.forEach((alias) => {
               game.aliases.includes(alias)
                 ? errors.push(
-                    `Alias ${alias} is already registered to ${game.game_name}`
+                    `"${alias}" is already an alias for ${game.game_name}`
                   )
                 : null;
             });
@@ -88,8 +88,8 @@ export const add = {
       await interaction.member.roles.add(role);
 
       return interaction.reply(
-        `${gameName} was registered ${
-          aliases.length ? `with aliases ${aliases}` : ""
+        `${gameName} was registered${
+          aliases.length ? ` with aliases ${aliases}.` : "."
         }`
       );
     } catch (e) {

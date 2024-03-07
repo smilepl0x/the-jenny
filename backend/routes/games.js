@@ -15,7 +15,7 @@ const routes = async (fastify, options) => {
       gameName,
       JSON.stringify(aliases),
     ]);
-    return replyHandler(reply, true, { games: result.slice(3).flat() });
+    return replyHandler(reply, true, { games: result.slice(2).flat() });
   });
 
   // Add a game

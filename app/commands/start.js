@@ -10,7 +10,7 @@ export const start = {
     .addStringOption((option) =>
       option
         .setName("game")
-        .setDescription("The name of the game")
+        .setDescription("The name (or alias) of the game")
         .setMaxLength(25)
         .setRequired(true)
     ),
