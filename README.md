@@ -3,13 +3,24 @@
 The Jenny is a Discord bot that I made for a personal server with some friends, but feel free to spin her up if you think she'd be useful.
 ## Commands
 
+`/start [game_name]`
+ - Start a game with your friends!
+ - This command also supports aliases. (i.e. `/start ow` instead of `/start Overwatch`)
+   
+![image](https://github.com/smilepl0x/the-jenny/assets/47682247/cde218c2-5be8-4bdc-a36a-e7f4af1c38e8)
+
+
+`/add [game_name] | optional: [max_party_size] [aliases]`
+ - Add a new game to your server
+ - This adds a new role to your server for this game
+ - max_party_size takes an integer
+ - aliases takes comma separated strings (i.e. ow,ow2)
+
+`/register [game_name]`
+ - Register self for one of the channel's games (adds user to role)
+ - Game must be selected from populated list
+
+--- Deprecated (will be removed soon) ---
+
 `/show battletag#id`
  - This will scrape Overwatch data from the Blizzard webpage and display QP stats in a message
-
-`/start game_name`
- - Used for letting the crew know you're starting a game
- - Configs can be added to tag roles for certain games
- - Configs can be added to start the game with an alias (i.e `/start Overwatch` becomes `/start ow`)
- - Configs can be added to limit party size for certain games
- - Configs can be added to close a party after time has elapsed
-![image](https://github.com/smilepl0x/the-jenny/assets/47682247/115e0450-860f-4c0f-840f-80c6d26cfd16)
