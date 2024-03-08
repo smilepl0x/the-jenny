@@ -8,7 +8,7 @@ export const register = {
     .addStringOption((option) =>
       option
         .setName("name")
-        .setDescription("The name or alias of the game")
+        .setDescription("The name of the game")
         .setMaxLength(30)
         .setRequired(true)
         .setAutocomplete(true)
@@ -43,11 +43,16 @@ export const register = {
           user: interaction.user,
           role: role,
         });
-        await interaction.reply("Done.");
+        await interaction.reply({
+          content: `You've been registered to the ${game.game_name} role! You will now receive notifications when this game starts.`,
+          ephemeral: true,
+        });
       } else {
-        await interaction.reply(
-          "That game hasn't been added to this channel. To add it, use the `/add` command."
-        );
+        await interaction.reply({
+          content:
+            "Please select from the populated games when using this command. To add a new game, use the `/add` command.",
+          ephemeral: true,
+        });
       }
     } catch (e) {
       interaction.reply("Something broke. Great job.");
