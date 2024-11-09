@@ -106,9 +106,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
       maxPartySize = max_party_size;
       partyFull = maxPartySize ? partyMembers?.length >= maxPartySize : false;
     } else if (interaction.customId === "in-a-bit") {
-      interaction.channel.send(
-        `${interaction.member.nickname} will join soon!`
-      );
+      interaction.channel.send(`${nickname} will join soon!`);
     }
 
     // Update button states
