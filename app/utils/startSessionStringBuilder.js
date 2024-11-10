@@ -1,5 +1,5 @@
 // holy shit this is ugly
-export const startSessionStringBuilder = ({
+const startSessionStringBuilder = ({
   original,
   interaction,
   role,
@@ -19,3 +19,5 @@ export const startSessionStringBuilder = ({
     maxParty ? `/${maxParty}` : ""
   }):\n\t${party.join(", ")}\`\`\``;
 };
+
+export default startSessionStringBuilder;

@@ -1,7 +1,7 @@
 import { ActionRowBuilder, ButtonBuilder } from "@discordjs/builders";
-import { SlashCommandBuilder, ButtonStyle } from "discord.js";
-import { startSessionStringBuilder } from "../utils.js";
+import { ButtonStyle, SlashCommandBuilder } from "discord.js";
 import { serviceFetch } from "../utils/serviceFetch.js";
+import startSessionStringBuilder from "../utils/startSessionStringBuilder.js";
 
 export const start = {
   data: new SlashCommandBuilder()
