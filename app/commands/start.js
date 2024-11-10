@@ -1,7 +1,8 @@
 import { ActionRowBuilder, ButtonBuilder } from "@discordjs/builders";
-import { SlashCommandBuilder, ButtonStyle } from "discord.js";
-import { startSessionStringBuilder } from "../utils.js";
+import { ButtonStyle, SlashCommandBuilder } from "discord.js";
+import { SESSION_MESSAGE_CONSTS } from "../constants/sessionMessageConstants.js";
 import { serviceFetch } from "../utils/serviceFetch.js";
+import startSessionStringBuilder from "../utils/startSessionStringBuilder.js";
 
 export const start = {
   data: new SlashCommandBuilder()
@@ -17,15 +18,15 @@ export const start = {
   async execute(interaction) {
     const buttons = new ActionRowBuilder().addComponents(
       new ButtonBuilder()
-        .setCustomId("drop-in")
+        .setCustomId(SESSION_MESSAGE_CONSTS.DROP_IN_BTN_ID)
         .setLabel("Drop in")
         .setStyle(ButtonStyle.Primary),
       new ButtonBuilder()
-        .setCustomId("drop-out")
+        .setCustomId(SESSION_MESSAGE_CONSTS.DROP_OUT_BTN_ID)
         .setLabel("Drop out")
         .setStyle(ButtonStyle.Secondary),
       new ButtonBuilder()
-        .setCustomId("in-a-bit")
+        .setCustomId(SESSION_MESSAGE_CONSTS.IN_A_BIT_BTN_ID)
         .setLabel("In a bit")
         .setStyle(ButtonStyle.Secondary)
     );
