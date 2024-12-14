@@ -1,4 +1,4 @@
 export const generateRandomHexArray = () => {
-  const getHex = () => Math.random() * (255 - 0);
+  const getHex = () => Math.floor(Math.random() * 255);
   return [getHex(), getHex(), getHex()];
 };
