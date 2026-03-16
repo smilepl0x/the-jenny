@@ -11,6 +11,16 @@ const routes = async (fastify, options) => {
     replyHandler(reply, true, { sessions: Object.values(sessions) });
   });
 
+  // Get all active sessions by channel id
+  fastify.get("/sessions/:id", async function handler(request, reply) {
+    const [sessions] = await fastify.mysql.query(
+      SESSIONS.GET_SESSIONS_FOR_CHANNEL,
+      [request.params.id]
+    );
+    replyHandler(reply, sessions.length > 0, { sessions: Object.values(sessions) });
+  });
+
+
   // Delete expired sessions, return affected
   fastify.patch(
     "/sessions",
@@ -64,6 +74,16 @@ const routes = async (fastify, options) => {
       request.params.id,
     ]);
     replyHandler(reply, result?.affectedRows > 0);
+  });
+
+  // Update a message_id for a session
+  fastify.patch("/session/:id", async function handler(request, reply) {
+    const { messageId } = request.body;
+    const [result, _] = await fastify.mysql.query(SESSIONS.UPDATE_SESSION_MESSAGE_ID, [
+      messageId,
+      request.params.id,
+    ]);
+    replyHandler(reply, result?.changedRows > 0);
   });
 
   // Join a session by message id
