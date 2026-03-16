@@ -1,6 +1,7 @@
 import { Client, Events, GatewayIntentBits, Partials } from "discord.js";
 import onAutocomplete from "./handlers/onAutocomplete.js";
 import onButtonInteraction from "./handlers/onButtonInteraction.js";
+import onMessage from "./handlers/onMessage.js";
 import onSlashCommand from "./handlers/onSlashCommand.js";
 import SessionManager from "./SessionManager.js";
 import setAllCommands from "./utils/setAllCommands.js";
@@ -30,6 +31,18 @@ client.on(Events.InteractionCreate, async (interaction) => {
   else if (interaction.isButton()) onButtonInteraction(interaction);
   else if (interaction.isAutocomplete()) onAutocomplete(interaction);
 });
+
+const debounceMessage = (f) => {
+  let timeout;
+  return function (...args) {
+    clearTimeout(timeout);
+    timeout = setTimeout(() => f.apply(this, args), 500);
+  }
+}
+
+client.on(Events.MessageCreate, debounceMessage((message) => {
+  if (!message.author.bot && process.env.STICKY_SESSION === "true") onMessage(message);
+}));
 
 // Log in to Discord with your client's token
 client.login(process.env.TOKEN);

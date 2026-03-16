@@ -1,8 +1,6 @@
-import { ActionRowBuilder, ButtonBuilder } from "@discordjs/builders";
-import { ButtonStyle } from "discord.js";
-import { SESSION_MESSAGE_CONSTS } from "../constants/sessionMessageConstants.js";
 import { serviceFetch } from "../utils/serviceFetch.js";
-import startSessionStringBuilder from "../utils/startSessionStringBuilder.js";
+import sessionMessageBuilder from "../utils/sessionMessageBuilder.js";
+import { SESSION_MESSAGE_CONSTS } from "../constants/sessionMessageConstants.js";
 
 const onButtonInteraction = async (interaction) => {
   try {
@@ -39,38 +37,13 @@ const onButtonInteraction = async (interaction) => {
       interaction.channel.send(`${nickname} will join soon!`);
     }
 
-    // Update button states
-    const buttons = new ActionRowBuilder().addComponents(
-      new ButtonBuilder()
-        .setCustomId(SESSION_MESSAGE_CONSTS.DROP_IN_BTN_ID)
-        .setLabel(partyFull ? "Party full" : "Drop in")
-        .setStyle(ButtonStyle.Primary)
-        .setDisabled(partyFull),
-      new ButtonBuilder()
-        .setCustomId(SESSION_MESSAGE_CONSTS.DROP_OUT_BTN_ID)
-        .setLabel("Drop out")
-        .setStyle(ButtonStyle.Secondary),
-      new ButtonBuilder()
-        .setCustomId(SESSION_MESSAGE_CONSTS.IN_A_BIT_BTN_ID)
-        .setLabel("In a bit")
-        .setStyle(ButtonStyle.Secondary)
-    );
-
     const [original, _] = interaction.message.content.split("\n");
     let interactionObj;
     if (
       partyMembers?.length > 0 ||
       interaction.customId === SESSION_MESSAGE_CONSTS.IN_A_BIT_BTN_ID
     ) {
-      interactionObj = {
-        content: startSessionStringBuilder({
-          original,
-          numParty: partyMembers?.length,
-          maxParty: maxPartySize,
-          party: partyMembers,
-        }),
-        components: [buttons],
-      };
+      interactionObj = sessionMessageBuilder(original, partyMembers, maxPartySize)
     } else {
       interactionObj = {
         content: "Session ended",

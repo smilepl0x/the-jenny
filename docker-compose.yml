@@ -3,6 +3,7 @@
 
 services:
   db:
+    user: ${DB_UID}:${DB_GID}
     image: mysql:8.0.33
     command: --default-authentication-plugin=caching_sha2_password
     restart: always
@@ -47,6 +48,7 @@ services:
       BACKEND_DOMAIN: ${BACKEND_DOMAIN}
       BACKEND_PORT: ${BACKEND_PORT}
       SESSION_LENGTH: ${SESSION_LENGTH}
+      STICKY_SESSION: ${STICKY_SESSION}
     depends_on:
       - backend
 
